@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adwin Space</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=VT323&family=Inter:wght@300;400;600&display=swap');
+        
+        :root {
+            --primary: #00ffaa;
+            --primary-glow: rgba(0, 255, 170, 0.4);
+            --secondary: #ff007b;
+            --secondary-glow: rgba(255, 0, 123, 0.4);
+            --accent: #00d4ff;
+            --bg-dark: #05050a;
+            --bg-card: rgba(15, 15, 25, 0.7);
+            --text-main: #e0e0e0;
+            --text-dim: #909090;
+            --border: rgba(0, 255, 170, 0.2);
+            --font-mono: 'VT323', monospace;
+            --font-header: 'Orbitron', sans-serif;
+            --font-main: 'Inter', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+            cursor: none; /* Custom cursor */
+        }
+        
+        /* Pixel grid background */
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 170, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 170, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .background-vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        /* Custom Cursor */
+        #cursor-follower {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background 0.2s;
+            mix-blend-mode: difference;
+        }
+
+        #cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+        
+        .pixel-avatar {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
+        }
+
+        .pixel-avatar::after {
+            content: 'AB';
+            font-family: var(--font-header);
+            font-size: 32px;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+        
+        h1 {
+            font-family: var(--font-header);
+            font-size: 56px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        h1::before {
+            content: attr(data-text);
+            position: absolute;
+            left: -2px;
+            text-shadow: 2px 0 var(--secondary);
+            top: 0;
+            color: #fff;
+            background: var(--bg-dark);
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+            animation: noise-anim 2s infinite linear alternate-reverse;
+        }
+        
+        .title {
+            font-family: var(--font-mono);
+            font-size: 20px;
+            color: var(--accent);
+            opacity: 0.8;
+            margin-top: -10px;
+        }
+        
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 12px 24px;
+            font-family: var(--font-header);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+            clip-path: polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px);
+        }
+        
+        .nav-btn:hover {
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-5px);
+        }
+        
+        .nav-btn.active {
+            background: var(--primary);
+            color: var(--bg-dark);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        
+        /* Sections */
+        .section {
+            display: none;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-header);
+            font-size: 28px;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .section-header .line {
+            flex-grow: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        
+        /* Glass Card */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scanline-h 3s linear infinite;
+        }
+        
+        /* Skills */
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        
+        .skill-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .skill-item:hover {
+            background: rgba(0, 255, 170, 0.1);
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .skill-item h3 {
+            font-family: var(--font-header);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .skill-bar {
+            height: 4px;
+            background: #222;
+            width: 100%;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .skill-progress {
+            height: 100%;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+        
+        /* Projects */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            transition: all 0.4s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .project-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(-10px);
+        }
+
+        .project-img {
+            height: 180px;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-img i {
+            font-size: 50px;
+            color: var(--primary);
+            opacity: 0.5;
+        }
+
+        .project-content {
+            padding: 20px;
+            flex-grow: 1;
+        }
+        
+        .project-title {
+            font-family: var(--font-header);
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .project-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+        
+        .project-tech {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .tech-tag {
+            background: rgba(0, 255, 170, 0.1);
+            color: var(--primary);
+            padding: 4px 10px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            border-radius: 2px;
+            border: 1px solid var(--border);
+        }
+        
+        /* Animations */
+        @keyframes scanline-h {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes noise-anim {
+            0% { clip: rect(44px, 9999px, 56px, 0); }
+            100% { clip: rect(12px, 9999px, 88px, 0); }
+        }
+        
+        /* Mobile */
+        @media (max-width: 600px) {
+            h1 { font-size: 36px; }
+            .nav { gap: 8px; }
+            .nav-btn { padding: 10px 15px; font-size: 12px; }
+            .container { padding: 20px 15px; }
+        }
+
+        /* Terminal inside sections */
+        .terminal-box {
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 20px;
+            font-family: var(--font-mono);
+            color: var(--primary);
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .terminal-box::before {
+            content: 'SYSTEM_OUTPUT';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: var(--bg-dark);
+            padding: 0 10px;
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-overlay"></div>
+    <div class="background-vignette"></div>
+    <div id="cursor-follower"></div>
+    <div id="cursor-dot"></div>
+
+    <div class="container">
+        <header class="header">
+            <div class="pixel-avatar"></div>
+            <h1 data-text="[ ADWIN BHASKORO ]">[ ADWIN BHASKORO ]</h1>
+            <p class="title">// Senior Full Stack Developer</p>
+        </header>
+        
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showSection('about')">About</button>
+            <button class="nav-btn" onclick="showSection('skills')">Skills</button>
+            <button class="nav-btn" onclick="showSection('projects')">Projects</button>
+            <button class="nav-btn" onclick="showSection('experience')">Experience</button>
+            <button class="nav-btn" onclick="showSection('contact')">Contact</button>
+        </nav>
+        
+        <main>
+            <!-- About Section -->
+            <section id="about" class="section active">
+                <div class="section-header">
+                    <h2>> System.About</h2>
+                    <div class="line"></div>
+                </div>
+                <div class="glass-card">
+                    <div class="terminal-box">
+                        <div class="terminal-line">console.log("Initializing Adwin.profile...");</div>
+                        <div class="terminal-line">> Senior Full-stack Developer with 5+ years of experience in building robust web and mobile ecosystems.</div>
+                        <div class="terminal-line">> Specializing in high-performance API architectures and real-time payment integrations.</div>
+                        <div class="terminal-line">> Mission: Merging pixel-perfect design with solid engineering.</div>
+                    </div>
+                    
+                    <h3 style="color: var(--accent); margin: 20px 0 10px; font-family: var(--font-header); font-size: 14px;">// CORE_INTERESTS</h3>
+                    <p style="color: var(--text-dim); font-size: 14px; letter-spacing: 1px;">
+                        <span style="color: var(--primary)">[</span> OPEN_SOURCE <span style="color: var(--primary)">]</span> &nbsp;&nbsp; 
+                        <span style="color: var(--primary)">[</span> DB_ARCHITECTURE <span style="color: var(--primary)">]</span> &nbsp;&nbsp; 
+                        <span style="color: var(--primary)">[</span> RETRO_GAMING <span style="color: var(--primary)">]</span>
+                    </p>
+                </div>
+            </section>
+            
+            <!-- Skills Section -->
+            <section id="skills" class="section">
+                <div class="section-header">
+                    <h2>> System.Tech_Stack</h2>
+                    <div class="line"></div>
+                </div>
+                <div class="glass-card">
+                    <div class="skill-grid">
+                        <div class="skill-item">
+                            <h3>VB.NET</h3>
+                            <div class="skill-bar"><div class="skill-progress" style="width: 95%"></div></div>
+                        </div>
+                        <div class="skill-item">
+                            <h3>PHP</h3>
+                            <div class="skill-bar"><div class="skill-progress" style="width: 90%"></div></div>
+                        </div>
+                        <div class="skill-item">
+                            <h3>Node.js</h3>
+                            <div class="skill-bar"><div class="skill-progress" style="width: 85%"></div></div>
+                        </div>
+                        <div class="skill-item">
+                            <h3>Flutter</h3>
+                            <div class="skill-bar"><div class="skill-progress" style="width: 80%"></div></div>
+                        </div>
+                        <div class="skill-item">
+                            <h3>SQL Server</h3>
+                            <div class="skill-bar"><div class="skill-progress" style="width: 90%"></div></div>
+                        </div>
+                        <div class="skill-item">
+                            <h3>PostgreSQL</h3>
+                            <div class="skill-bar"><div class="skill-progress" style="width: 75%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Projects Section -->
+            <section id="projects" class="section">
+                <div class="section-header">
+                    <h2>> System.Deployments</h2>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="project-grid">
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-credit-card"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">API Integrasi Pembayaran BRI</h3>
+                            <p class="project-desc">High-speed real-time payment processing system integrated with Bank BRI via secure banking protocols.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Node.JS</span>
+                                <span class="tech-tag">SQL Server</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-store"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">API Integrasi Alfamart</h3>
+                            <p class="project-desc">Retail payment gateway integration for Alfamart outlets to process payments via retail stores.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Node.JS</span>
+                                <span class="tech-tag">SQL Server</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">API Integrasi Indomaret</h3>
+                            <p class="project-desc">Retail payment gateway integration for Indomaret outlets to process payments via retail stores.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Node.JS</span>
+                                <span class="tech-tag">SQL Server</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-file-invoice"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">Document Workflow System</h3>
+                            <p class="project-desc">Enterprise document management system with routing logic for approval processes.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">PHP</span>
+                                <span class="tech-tag">MySQL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-link"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">Sistem Integrasi Database</h3>
+                            <p class="project-desc">Database integration system between PHP and SQL Server using ODBC for data synchronization.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">PHP</span>
+                                <span class="tech-tag">SQL Server</span>
+                                <span class="tech-tag">ODBC</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-users-cog"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">HRIS Enterprise</h3>
+                            <p class="project-desc">Human Resources software including payroll, attendance, leave management, and performance reviews.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">PHP</span>
+                                <span class="tech-tag">MySQL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-briefcase"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">Core Sistem Reksa</h3>
+                            <p class="project-desc">Core financial system including installment modules, collection, and desk collection management.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">VB.Net</span>
+                                <span class="tech-tag">SQL Server</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-img"><i class="fas fa-mobile-alt"></i></div>
+                        <div class="project-content">
+                            <h3 class="project-title">Flutter Apps Collection</h3>
+                            <p class="project-desc">Mobile application for collection built with Flutter integrated with PostgreSQL database.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Flutter</span>
+                                <span class="tech-tag">PostgreSQL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Experience Section -->
+            <section id="experience" class="section">
+                <div class="section-header">
+                    <h2>> System.Timeline</h2>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="project-card" style="border-left: 4px solid var(--primary); margin-bottom: 30px;">
+                        <div class="project-content">
+                            <h3 class="project-title" style="color: var(--primary)">Senior Full Stack Developer</h3>
+                            <p style="color: var(--accent); font-family: var(--font-mono); margin-bottom: 10px;">PT. Reksafinance | 2023 - Present</p>
+                            <ul style="color: var(--text-dim); font-size: 14px; padding-left: 20px;">
+                                <li>Directing Flutter mobile development for collection ecosystem with real-time PostgreSQL syncing.</li>
+                                <li>Architecting Node.js payment layers for major banking channels (BRI, Alfamart, Indomaret).</li>
+                                <li>Establishing cross-stack CI/CD pipelines (Flutter, PHP, .NET) for rapid product delivery.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card" style="border-left: 4px solid var(--border);">
+                        <div class="project-content">
+                            <h3 class="project-title" style="color: var(--text-main)">Full Stack Developer</h3>
+                            <p style="color: var(--accent); font-family: var(--font-mono); margin-bottom: 10px;">PT. Reksafinance | 2020 - 2023</p>
+                            <ul style="color: var(--text-dim); font-size: 14px; padding-left: 20px;">
+                                <li>Maintained enterprise internal systems (Document Workflow, HRIS, Core Financial).</li>
+                                <li>Built internal payment integrations using PHP + SQL Server/ODBC.</li>
+                                <li>Optimized data synchronization across distributed database environments.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Contact Section -->
+            <section id="contact" class="section">
+                <div class="section-header">
+                    <h2>> System.Comm_Link</h2>
+                    <div class="line"></div>
+                </div>
+                <div class="glass-card">
+                    <div class="contact-form">
+                        <form onsubmit="handleSubmit(event)">
+                            <div class="form-group">
+                                <label for="name">ID_IDENTIFIER</label>
+                                <input type="text" id="name" name="name" required placeholder="Enter name...">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">FREQ_ADDRESS</label>
+                                <input type="email" id="email" name="email" required placeholder="Enter email...">
+                            </div>
+                            <div class="form-group">
+                                <label for="message">DATA_PACKET</label>
+                                <textarea id="message" name="message" rows="5" required placeholder="Enter message structure..."></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn" style="width: 100%; font-family: var(--font-header);">TRANSMIT_MESSAGE</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="footer">
+            <p style="color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; letter-spacing: 2px;">
+                © 2026 [ ADWIN BHASKORO ] - ARCHIVED_IN_NEON - V.2.0.1
+            </p>
+            <div class="social-links">
+                <a href="#" class="social-link" title="GitHub"><i class="fab fa-github"></i></a>
+                <a href="#" class="social-link" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#" class="social-link" title="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="social-link" title="Email"><i class="fas fa-envelope"></i></a>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Navigation functionality
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            const buttons = document.querySelectorAll('.nav-btn');
+            
+            // Fade out current section
+            const currentSection = document.querySelector('.section.active');
+            if (currentSection) {
+                currentSection.style.opacity = '0';
+                currentSection.style.transform = 'translateY(20px)';
+            }
+            
+            setTimeout(() => {
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                    section.style.display = 'none';
+                });
+                buttons.forEach(btn => btn.classList.remove('active'));
+                
+                const nextSection = document.getElementById(sectionId);
+                nextSection.style.display = 'block';
+                
+                // Trigger reflow
+                nextSection.offsetHeight;
+                
+                nextSection.classList.add('active');
+                nextSection.style.opacity = '1';
+                nextSection.style.transform = 'translateY(0)';
+                
+                // Add active class to clicked button
+                const activeBtn = Array.from(buttons).find(btn => btn.getAttribute('onclick').includes(sectionId));
+                if (activeBtn) activeBtn.classList.add('active');
+            }, 300);
+        }
+        
+        async function initSystem() {
+            // Simplified initialization
+            console.log('System initialized');
+        }
+
+        // Custom Cursor
+        const cursorFollower = document.getElementById('cursor-follower');
+        const cursorDot = document.getElementById('cursor-dot');
+
+        document.addEventListener('mousemove', (e) => {
+            cursorDot.style.left = e.clientX + 'px';
+            cursorDot.style.top = e.clientY + 'px';
+            
+            setTimeout(() => {
+                cursorFollower.style.left = e.clientX + 'px';
+                cursorFollower.style.top = e.clientY + 'px';
+            }, 50);
+        });
+
+        document.addEventListener('mousedown', () => {
+            cursorFollower.style.width = '15px';
+            cursorFollower.style.height = '15px';
+            cursorFollower.style.background = 'var(--primary)';
+        });
+
+        document.addEventListener('mouseup', () => {
+            cursorFollower.style.width = '20px';
+            cursorFollower.style.height = '20px';
+            cursorFollower.style.background = 'transparent';
+        });
+
+        // Form submission
+        function handleSubmit(event) {
+            event.preventDefault();
+            const btn = event.target.querySelector('button');
+            const originalText = btn.textContent;
+            
+            btn.textContent = 'TRANSMITTING...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                alert('MESSAGE_TRANSMITTED: Data packet sent successfully.');
+                btn.textContent = originalText;
+                btn.disabled = false;
+                event.target.reset();
+            }, 2000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initSystem();
+        });
+    </script>
+</body>
+</html>
